@@ -1,0 +1,341 @@
+= Excel 生成專案報告
+:author: 你的名字
+:date: 2024-10-29
+
+== 專案簡介
+本專案的目的是使用 Apache POI 來生成 Excel 檔案，並且透過自訂樣式展示候選人的個人資料。報告將介紹關鍵類別、方法，以及如何應用這些類別來完成 Excel 檔案的樣式設計與數據填充。
+
+== 核心類別介紹
+
+=== 1. `StyleBuilder` 類別
+`StyleBuilder` 是用來設定 Excel 儲存格樣式的核心類別。此類別可以自訂字體大小、顏色、對齊方式、邊框等，並透過鏈式調用來方便地應用多種樣式。
+
+[source, java]
+----
+public class StyleBuilder {
+
+    private Workbook workbook;
+    private CellStyle cellStyle;
+    private Font font;
+
+    public StyleBuilder(Workbook workbook) {
+        this.workbook = workbook;
+        this.cellStyle = workbook.createCellStyle();
+        this.font = workbook.createFont();
+    }
+
+    // 設定字體大小
+    public StyleBuilder setFontSize(short size) {
+        font.setFontHeightInPoints(size);
+        return this;
+    }
+
+    // 設定字體樣式（粗體、斜體、底線等）
+    public StyleBuilder setFontStyle(FontStyle... styles) {
+        for (FontStyle style : styles) {
+            style.applyFontStyle(font);
+        }
+        return this;
+    }
+
+    // 設定字體顏色
+    public StyleBuilder setFontColor(short color) {
+        font.setColor(color);
+        return this;
+    }
+
+    // 設定背景顏色
+    public StyleBuilder setBackgroundColor(short color) {
+        cellStyle.setFillForegroundColor(color);
+        cellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        return this;
+    }
+
+    // 設定文字對齊方式
+    public StyleBuilder setTextAlign(TextAlign... aligns) {
+        for (TextAlign align : aligns) {
+            align.applyTextAlign(cellStyle);
+        }
+        return this;
+    }
+
+    // 設定邊框樣式
+    public StyleBuilder setBorderStyle(CustomBorderStyle... styles) {
+        for (CustomBorderStyle style : styles) {
+            style.applyBorderStyle(cellStyle);
+        }
+        return this;
+    }
+
+    // 合併儲存格
+    public StyleBuilder mergeCells(Sheet sheet, int firstRow, int lastRow, int firstCol, int lastCol) {
+        sheet.addMergedRegion(new CellRangeAddress(firstRow, lastRow, firstCol, lastCol));
+        return this;
+    }
+
+    // 建立樣式
+    public CellStyle build() {
+        cellStyle.setFont(font);
+        return cellStyle;
+    }
+}
+----
+
+在這裡，我們可以透過這個類別來靈活定義 Excel 儲存格的樣式，無論是字體大小、顏色，還是對齊方式與邊框設定，都可以輕鬆實現。
+
+=== 2. `StyleEnums` 類別
+`StyleEnums` 類別定義了多個列舉（Enum），用來表現常見的樣式選項，包括字體樣式（粗體、斜體等）、文字對齊方式（左對齊、居中對齊等）及邊框樣式（實線、虛線等）。這些列舉幫助提升樣式設定的可讀性與維護性。
+
+[source, java]
+----
+public class StyleEnums {
+
+    // 字體樣式列舉
+    public enum FontStyle {
+        BOLD {
+            @Override
+            public void applyFontStyle(Font font) {
+                font.setBold(true);
+            }
+        },
+        ITALIC {
+            @Override
+            public void applyFontStyle(Font font) {
+                font.setItalic(true);
+            }
+        },
+        UNDERLINE {
+            @Override
+            public void applyFontStyle(Font font) {
+                font.setUnderline(Font.U_SINGLE);
+            }
+        },
+        NORMAL {
+            @Override
+            public void applyFontStyle(Font font) {
+                // 預設不做變更
+            }
+        };
+
+        public abstract void applyFontStyle(Font font);
+    }
+
+    // 文字對齊方式列舉
+    public enum TextAlign {
+        LEFT {
+            @Override
+            public void applyTextAlign(CellStyle style) {
+                style.setAlignment(HorizontalAlignment.LEFT);
+            }
+        },
+        CENTER {
+            @Override
+            public void applyTextAlign(CellStyle style) {
+                style.setAlignment(HorizontalAlignment.CENTER);
+            }
+        },
+        RIGHT {
+            @Override
+            public void applyTextAlign(CellStyle style) {
+                style.setAlignment(HorizontalAlignment.RIGHT);
+            }
+        };
+
+        public abstract void applyTextAlign(CellStyle style);
+    }
+
+    // 邊框樣式列舉
+    public enum CustomBorderStyle {
+        SOLID {
+            @Override
+            public void applyBorderStyle(CellStyle style) {
+                style.setBorderTop(BorderStyle.THIN);
+                style.setBorderBottom(BorderStyle.THIN);
+                style.setBorderLeft(BorderStyle.THIN);
+                style.setBorderRight(BorderStyle.THIN);
+            }
+        },
+        DASHED {
+            @Override
+            public void applyBorderStyle(CellStyle style) {
+                style.setBorderTop(BorderStyle.DASHED);
+                style.setBorderBottom(BorderStyle.DASHED);
+                style.setBorderLeft(BorderStyle.DASHED);
+                style.setBorderRight(BorderStyle.DASHED);
+            }
+        },
+        DOTTED {
+            @Override
+            public void applyBorderStyle(CellStyle style) {
+                style.setBorderTop(BorderStyle.DOTTED);
+                style.setBorderBottom(BorderStyle.DOTTED);
+                style.setBorderLeft(BorderStyle.DOTTED);
+                style.setBorderRight(BorderStyle.DOTTED);
+            }
+        };
+
+        public abstract void applyBorderStyle(CellStyle style);
+    }
+}
+----
+
+這些列舉類別確保了樣式的應用一致性，並簡化了樣式設定的程式碼邏輯。
+
+=== 3. `PersonalInfoSection` 類別
+`PersonalInfoSection` 用來填充 Excel 表中的個人資料區段。它依賴 `StyleBuilder` 來設定每個儲存格的樣式，並將資料填入相應的欄位中。
+
+[source, java]
+----
+public class PersonalInfoSection extends Section {
+
+    private Candidate candidate;
+
+    public PersonalInfoSection(Candidate candidate) {
+        super("Personal Information");
+        this.candidate = candidate;
+    }
+
+    @Override
+    public int populate(XSSFSheet sheet, int rowNum) {
+        // 創建 StyleBuilder
+        StyleBuilder styleBuilder = new StyleBuilder(sheet.getWorkbook());
+
+        // 設置不同的樣式
+        CellStyle headerStyle = createHeaderStyle(styleBuilder);
+        CellStyle dataStyle = createDataStyle(styleBuilder);
+        CellStyle emailStyle = createEmailStyle(styleBuilder);
+        CellStyle leftColumnStyle = createLeftColumnStyle(styleBuilder);
+
+        // 合併儲存格
+        sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum, 0, 1));
+        Row headerRow = sheet.createRow(rowNum++);
+        createStyledCell(headerRow, 0, "Personal Information", headerStyle);
+
+        // 填充候選人數據
+        Row row = sheet.createRow(rowNum++);
+        createStyledCell(row, 0, "Name", leftColumnStyle);
+        createStyledCell(row, 1, candidate.getName(), dataStyle);
+
+        row = sheet.createRow(rowNum++);
+        createStyledCell(row, 0, "Gender", leftColumnStyle);
+        createStyledCell(row, 1, candidate.getGender(), dataStyle);
+
+        row = sheet.createRow(rowNum++);
+        createStyledCell(row, 0, "Birthday", leftColumnStyle);
+        createStyledCell(row, 1, new SimpleDateFormat("yyyy-MM-dd").format(candidate.getBirthday()), dataStyle);
+
+        row = sheet.createRow(rowNum++);
+        createStyledCell(row, 0, "Phone", leftColumnStyle);
+        createStyledCell(row, 1, candidate.getPhone(), dataStyle);
+
+        row = sheet.createRow(rowNum++);
+        createStyledCell(row, 0, "Email", leftColumnStyle);
+        createStyledCell(row, 1, candidate.getEmail(), emailStyle); // 使用 Email 特殊樣式
+
+        return rowNum;
+    }
+
+    // 幫助方法：創建帶樣式的儲存格
+    private void createStyledCell(Row row, int column, String value, CellStyle style) {
+        row.createCell(column).setCellValue(value);
+        row.getCell(column).setCellStyle(style);
+    }
+
+    // 樣式創建方法
+    private CellStyle createHeaderStyle(StyleBuilder styleBuilder) {
+        return styleBuilder.setFontStyle(StyleEnums.FontStyle.BOLD)
+                .setTextAlign(StyleEnums.TextAlign.CENTER) // 水平居中
+                .setFontSize((short) 16)
+                .setBorderStyle(StyleEnums.CustomBorderStyle.SOLID)
+                .build();
+    }
+
+    private CellStyle createDataStyle(StyleBuilder styleBuilder) {
+        return styleBuilder.setFontStyle(StyleEnums.FontStyle.NORMAL)
+                .setTextAlign(StyleEnums.TextAlign.CENTER) // 水平居中
+                .setFontSize((short) 10)
+                .setBorderStyle(StyleEnums.CustomBorderStyle.SOLID)
+                .build();
+    }
+
+    private CellStyle createEmailStyle(StyleBuilder styleBuilder) {
+        return styleBuilder.setFontStyle(StyleEnums.FontStyle.ITALIC)
+                .setTextAlign(StyleEnums.TextAlign.CENTER) // 水平居中
+                .setFontSize((short) 20)
+                .setFontColor(IndexedColors.BLUE.getIndex())
+                .build();
+    }
+
+    private CellStyle createLeftColumnStyle(StyleBuilder styleBuilder) {
+        return styleBuilder.setFontStyle(StyleEnums.FontStyle.BOLD)
+                .setTextAlign(StyleEnums.TextAlign.CENTER) // 水平居中
+                .setFontSize((short) 12)
+                .setBackgroundColor(IndexedColors.LIGHT_YELLOW.getIndex())
+                .setBorderStyle(StyleEnums.CustomBorderStyle.SOLID)
+                .build();
+    }
+}
+----
+
+=== 4. Excel 生成示例
+以下是生成 Excel 的程式碼範例，展示了如何填寫個人信息並應用自訂的樣式。
+
+[source, java]
+----
+XSSFSheet sheet = workbook.createSheet("Candidate Info");
+PersonalInfoSection personalInfoSection = new PersonalInfoSection(candidate);
+personalInfoSection.populate(sheet, 0);
+----
+
+== 未來改進
+
+目前的樣式設定邏輯已經很靈活，但在未來，我計劃進一步模組化樣式，將常見的樣式如大標題、小標題、資訊樣式等進行明確區分。這不僅提升了程式碼的可讀性，也讓樣式更容易在不同區段中重用。
+
+例如，以下是不同樣式的具體實現：
+
+// 大標題樣式 (14號字，粗體，置中)
+[source, java]
+----
+private CellStyle createHeaderStyle(Workbook workbook) {
+    StyleBuilder styleBuilder = new StyleBuilder(workbook);
+    return styleBuilder.setFontStyle(StyleEnums.FontStyle.BOLD)
+            .setFontSize((short) 14) 
+            .setTextAlign(StyleEnums.TextAlign.CENTER)
+            .build();
+}
+----
+
+這個方法設定了標題樣式，使用 14 號字、粗體字型並置中，適合應用於頁面大標題。
+
+// 小標題樣式 (12號字，粗體，背景黃色，置中)
+[source, java]
+----
+private CellStyle createLabelStyle(Workbook workbook) {
+    StyleBuilder styleBuilder = new StyleBuilder(workbook);
+    return styleBuilder.setFontStyle(StyleEnums.FontStyle.BOLD)
+            .setFontSize((short) 12)
+            .setTextAlign(StyleEnums.TextAlign.CENTER)
+            .setBackgroundColor(IndexedColors.LIGHT_YELLOW.getIndex())
+            .build();
+}
+----
+
+這個方法用來設置小標題樣式，12 號字、粗體並設置黃色背景，適合應用於標籤或欄位標題。
+
+// 資訊樣式 (12號字，正常字體，置中)
+[source, java]
+----
+private CellStyle createInfoStyle(Workbook workbook) {
+    StyleBuilder styleBuilder = new StyleBuilder(workbook);
+    return styleBuilder.setFontStyle(StyleEnums.FontStyle.NORMAL)
+            .setFontSize((short) 12)
+            .setTextAlign(StyleEnums.TextAlign.CENTER)
+            .build();
+}
+----
+
+這個方法適合用來填充欄位中的實際數據，例如候選人的個人資料欄位，採用 12 號字並置中顯示。
+
+== 改進效益
+
+這樣的改進可以減少重複的樣式設定邏輯，讓程式碼更加清晰、易於維護，同時也能提升樣式應用的靈活性。透過這樣的方式，我可以快速地為不同的 Excel 區段設置適當的樣式，並且在後續的開發中能夠更方便地調整或擴充樣式。

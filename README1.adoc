@@ -1,0 +1,70 @@
+= Excel Generator Report
+作者: 你的名字
+:toc:
+:toclevels: 2
+
+== 專案簡介
+這個專案的目的是使用 Apache POI 來生成 Excel 報表，並自定義不同區塊的樣式，例如標題、資料行、Email 樣式等。主要通過設計一個可重用的 `StyleBuilder` 類別來實現樣式設定，並使用 `PersonalInfoSection` 類別填充個人資訊。
+
+== 程式碼說明
+### StyleBuilder 類別
+`StyleBuilder` 類別主要用於設定 Excel 中的單元格樣式，包含字體、背景色、邊框等。以下是此類別的關鍵方法：
+- **setFontSize**: 設定字體大小。
+- **setFontStyle**: 使用枚舉類別 `FontStyle` 設定字體風格，如加粗、斜體、下劃線等。
+- **setFontColor**: 設定字體顏色。
+- **setBackgroundColor**: 設定背景色並應用填充模式。
+- **setTextAlign**: 設定文字對齊方式，支持左、右、居中對齊。
+- **setBorderStyle**: 設定邊框樣式，支持實線、虛線、點線等。
+- **mergeCells**: 合併多個單元格。
+
+透過這些方法，我們能夠靈活地調整單元格的樣式設定，並在 `build()` 方法中將字體應用到樣式中。
+
+[source,java]
+----
+public class StyleBuilder {
+    // 相關程式碼...
+}
+----
+
+### StyleEnums 枚舉類別
+此類別包含三個枚舉，分別用於設定字體樣式、文字對齊和邊框樣式。
+- **FontStyle**: 支持 BOLD、ITALIC、UNDERLINE 和 NORMAL。
+- **TextAlign**: 支持 LEFT、CENTER 和 RIGHT 對齊方式。
+- **CustomBorderStyle**: 支持 SOLID、DASHED 和 DOTTED 邊框樣式。
+
+這些枚舉透過各自的 `apply` 方法，將設定應用到單元格的 `CellStyle` 中。
+
+[source,java]
+----
+public class StyleEnums {
+    // 相關程式碼...
+}
+----
+
+### PersonalInfoSection 類別
+`PersonalInfoSection` 類別主要負責將個人資訊填充到 Excel 表格中。通過使用 `StyleBuilder` 來設定各類樣式，包括：
+- **標題樣式 (headerStyle)**: 加粗字體、居中對齊、字體大小 16。
+- **資料樣式 (dataStyle)**: 正常字體、居中對齊、字體大小 10。
+- **Email 樣式 (emailStyle)**: 斜體字體、居中對齊、字體大小 20、字體顏色藍色。
+- **左欄樣式 (leftColumnStyle)**: 加粗字體、居中對齊、字體大小 12、背景色淺黃色。
+
+以下是關鍵程式碼段：
+[source,java]
+----
+public class PersonalInfoSection extends Section {
+    // 相關程式碼...
+}
+----
+
+### 實作細節
+在這個實作中，我主要將樣式的設定封裝在 `StyleBuilder` 類別內，這樣的設計帶來幾個優點：
+- **高重用性**: `StyleBuilder` 使樣式設定更加靈活，方便在不同的 Section 中應用不同的樣式。
+- **易於維護**: 當需要修改樣式時，只需調整 `StyleBuilder` 中的相關方法即可，不需要更改每個 Section 中的細節。
+
+== 進一步的改進
+1. **分離樣式邏輯**: 目前我將樣式封裝在 `StyleBuilder` 內，但如果未來專案擴展，可以考慮透過介面進行更進一步的抽象。
+2. **單元測試**: 增加單元測試以確保每種樣式的正確性。
+
+== 結論
+通過這次實作，我學習並實踐了如何在 Apache POI 中靈活地使用 Builder 模式來設計可重用的樣式設定，並應用於 Excel 報表生成的各個區塊。未來可以考慮進一步優化樣式邏輯，提升專案的擴展性與維護性。
+
