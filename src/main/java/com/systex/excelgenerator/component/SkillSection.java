@@ -1,7 +1,9 @@
 package com.systex.excelgenerator.component;
 
 import com.systex.excelgenerator.model.Skill;
+import com.systex.excelgenerator.style.StyleBuilder;
 import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 
 import java.util.List;
@@ -19,6 +21,7 @@ public class SkillSection extends Section {
     public int populate(XSSFSheet sheet, int rowNum) {
         addHeader(sheet, rowNum);
         rowNum++;
+        StyleBuilder styleBuilder = new StyleBuilder(sheet.getWorkbook());
 
         Row headerRow = sheet.createRow(rowNum++);
         headerRow.createCell(0).setCellValue("Id");

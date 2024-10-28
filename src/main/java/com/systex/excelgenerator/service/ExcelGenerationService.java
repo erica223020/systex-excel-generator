@@ -38,16 +38,16 @@ public class ExcelGenerationService {
         Row headerRow = sheet.getRow(0);
         StyleBuilder styleBuilder = new StyleBuilder(sheet.getWorkbook());
 
-        if (headerRow != null) {
-            for (Cell cell : headerRow) {
-                CellStyle headerStyle = styleBuilder.setBold(true)
-                        .setFontSize((short) 14)
-                        .setAlignment(HorizontalAlignment.CENTER)
-                        .setBorder(BorderStyle.THIN)
-                        .build();
-                cell.setCellStyle(headerStyle);
-            }
-        }
+//        if (headerRow != null) {
+//            for (Cell cell : headerRow) {
+//                CellStyle headerStyle = styleBuilder.setBold(true)
+//                        .setFontSize((short) 14)
+//                        .setAlignment(HorizontalAlignment.CENTER)
+//                        .setBorder(BorderStyle.THIN)
+//                        .build();
+//                cell.setCellStyle(headerStyle);
+//            }
+//        }
 
         // Auto-size columns
         for (int i = 0; i < 5; i++) {
