@@ -1,14 +1,10 @@
-= Excel 生成專案報告
-:author: 你的名字
-:date: 2024-10-29
+= 生成Excel -Style
 
-== 專案簡介
-本專案的目的是使用 Apache POI 來生成 Excel 檔案，並且透過自訂樣式展示候選人的個人資料。報告將介紹關鍵類別、方法，以及如何應用這些類別來完成 Excel 檔案的樣式設計與數據填充。
-
-== 核心類別介紹
+== 簡介
+提供可以依照個人需求選擇的Style選項。
 
 === 1. `StyleBuilder` 類別
-`StyleBuilder` 是用來設定 Excel 儲存格樣式的核心類別。此類別可以自訂字體大小、顏色、對齊方式、邊框等，並透過鏈式調用來方便地應用多種樣式。
+`StyleBuilder` 用來設定 Excel 儲存格樣式的核心類別。可以自訂字體大小、顏色、對齊方式、邊框等，並透過鏈式調用來方便地應用多種樣式。
 
 [source, java]
 ----
@@ -81,10 +77,8 @@ public class StyleBuilder {
 }
 ----
 
-在這裡，我們可以透過這個類別來靈活定義 Excel 儲存格的樣式，無論是字體大小、顏色，還是對齊方式與邊框設定，都可以輕鬆實現。
-
 === 2. `StyleEnums` 類別
-`StyleEnums` 類別定義了多個列舉（Enum），用來表現常見的樣式選項，包括字體樣式（粗體、斜體等）、文字對齊方式（左對齊、居中對齊等）及邊框樣式（實線、虛線等）。這些列舉幫助提升樣式設定的可讀性與維護性。
+`StyleEnums` 類別定義多個Enum區別常見的樣式選項，包括字體樣式（粗體、斜體等）、文字對齊方式（左對齊、居中對齊等）及邊框樣式（實線、虛線等）。增加擴充性
 
 [source, java]
 ----
@@ -179,9 +173,7 @@ public class StyleEnums {
 }
 ----
 
-這些列舉類別確保了樣式的應用一致性，並簡化了樣式設定的程式碼邏輯。
-
-=== 3. `PersonalInfoSection` 類別
+=== 3. 應用於 `PersonalInfoSection` 類別
 `PersonalInfoSection` 用來填充 Excel 表中的個人資料區段。它依賴 `StyleBuilder` 來設定每個儲存格的樣式，並將資料填入相應的欄位中。
 
 [source, java]
@@ -211,7 +203,7 @@ public class PersonalInfoSection extends Section {
         Row headerRow = sheet.createRow(rowNum++);
         createStyledCell(headerRow, 0, "Personal Information", headerStyle);
 
-        // 填充候選人數據
+        // 填充個人數據
         Row row = sheet.createRow(rowNum++);
         createStyledCell(row, 0, "Name", leftColumnStyle);
         createStyledCell(row, 1, candidate.getName(), dataStyle);
@@ -235,13 +227,12 @@ public class PersonalInfoSection extends Section {
         return rowNum;
     }
 
-    // 幫助方法：創建帶樣式的儲存格
+    // 方法：創建帶樣式的儲存格
     private void createStyledCell(Row row, int column, String value, CellStyle style) {
         row.createCell(column).setCellValue(value);
         row.getCell(column).setCellStyle(style);
     }
 
-    // 樣式創建方法
     private CellStyle createHeaderStyle(StyleBuilder styleBuilder) {
         return styleBuilder.setFontStyle(StyleEnums.FontStyle.BOLD)
                 .setTextAlign(StyleEnums.TextAlign.CENTER) // 水平居中
@@ -277,8 +268,7 @@ public class PersonalInfoSection extends Section {
 }
 ----
 
-=== 4. Excel 生成示例
-以下是生成 Excel 的程式碼範例，展示了如何填寫個人信息並應用自訂的樣式。
+=== 4. Excel 生成例子
 
 [source, java]
 ----
@@ -289,9 +279,9 @@ personalInfoSection.populate(sheet, 0);
 
 == 未來改進
 
-目前的樣式設定邏輯已經很靈活，但在未來，我計劃進一步模組化樣式，將常見的樣式如大標題、小標題、資訊樣式等進行明確區分。這不僅提升了程式碼的可讀性，也讓樣式更容易在不同區段中重用。
+這是目前的規劃與設定方式，後面預計的方向是將常見的樣式模組化，像是將常見的樣式如大標題、小標題、內容資訊樣式等進行明確區分。
 
-例如，以下是不同樣式的具體實現：
+例如：
 
 // 大標題樣式 (14號字，粗體，置中)
 [source, java]
@@ -304,8 +294,6 @@ private CellStyle createHeaderStyle(Workbook workbook) {
             .build();
 }
 ----
-
-這個方法設定了標題樣式，使用 14 號字、粗體字型並置中，適合應用於頁面大標題。
 
 // 小標題樣式 (12號字，粗體，背景黃色，置中)
 [source, java]
@@ -320,9 +308,7 @@ private CellStyle createLabelStyle(Workbook workbook) {
 }
 ----
 
-這個方法用來設置小標題樣式，12 號字、粗體並設置黃色背景，適合應用於標籤或欄位標題。
-
-// 資訊樣式 (12號字，正常字體，置中)
+// 內容資訊樣式 (12號字，正常字體，置中)
 [source, java]
 ----
 private CellStyle createInfoStyle(Workbook workbook) {
@@ -334,8 +320,6 @@ private CellStyle createInfoStyle(Workbook workbook) {
 }
 ----
 
-這個方法適合用來填充欄位中的實際數據，例如候選人的個人資料欄位，採用 12 號字並置中顯示。
-
 == 改進效益
 
-這樣的改進可以減少重複的樣式設定邏輯，讓程式碼更加清晰、易於維護，同時也能提升樣式應用的靈活性。透過這樣的方式，我可以快速地為不同的 Excel 區段設置適當的樣式，並且在後續的開發中能夠更方便地調整或擴充樣式。
+這樣的改進可以減少重複的樣式設定邏輯，讓程式碼更加清晰、易於維護，同時也能提升樣式應用的靈活性。透過這樣的方式，可以快速地為不同的 Excel 區段設置適當的樣式，並且在後續的開發中能夠更方便地調整或擴充樣式。
