@@ -1,57 +1,31 @@
 package com.systex.excelgenerator.service;
 
 import com.systex.excelgenerator.builder.ConcreteExcelBuilder;
-import com.systex.excelgenerator.builder.ExcelBuilder;
-import com.systex.excelgenerator.style.StyleBuilder;
-import com.systex.excelgenerator.director.ExcelDirector;
-import com.systex.excelgenerator.excel.ExcelFile;
 import com.systex.excelgenerator.model.Candidate;
 import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 
 public class ExcelGenerationService {
 
     public void generateExcelForCandidate(Candidate candidate) {
-        // Build the Excel content
-        ExcelBuilder builder = new ConcreteExcelBuilder(candidate);
-        ExcelDirector director = new ExcelDirector(builder);
-        director.constructExcelFile();
+        // 建立 Excel 內容
+        ConcreteExcelBuilder builder = new ConcreteExcelBuilder(candidate);
+        builder.buildHeader();
+        builder.buildSections();
+        builder.buildFooter();
 
-        ExcelFile excelFile = director.getExcelFile();
+        // 取得 workbook
+        XSSFWorkbook workbook = builder.getWorkbook();
 
-        // Apply custom styles to the content
-        XSSFSheet sheet = excelFile.getWorkbook().getSheet("Candidate Information");
-        applyStyles(sheet);
-
-        // Save the Excel file
-        try {
-            excelFile.saveToFile("candidate_info.xlsx");
+        // 儲存到檔案
+        try (FileOutputStream fileOut = new FileOutputStream("candidate_info_test.xlsx")) {
+            workbook.write(fileOut); // 寫入 Excel 文件
+            workbook.close(); // 關閉 workbook 資源
         } catch (IOException e) {
             e.printStackTrace();
-        }
-    }
-
-    private void applyStyles(XSSFSheet sheet) {
-        // Example: Apply styles to the first row (header)
-        Row headerRow = sheet.getRow(0);
-        StyleBuilder styleBuilder = new StyleBuilder(sheet.getWorkbook());
-
-//        if (headerRow != null) {
-//            for (Cell cell : headerRow) {
-//                CellStyle headerStyle = styleBuilder.setBold(true)
-//                        .setFontSize((short) 14)
-//                        .setAlignment(HorizontalAlignment.CENTER)
-//                        .setBorder(BorderStyle.THIN)
-//                        .build();
-//                cell.setCellStyle(headerStyle);
-//            }
-//        }
-
-        // Auto-size columns
-        for (int i = 0; i < 5; i++) {
-            sheet.autoSizeColumn(i);
         }
     }
 }
